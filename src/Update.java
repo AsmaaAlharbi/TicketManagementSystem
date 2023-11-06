@@ -1,15 +1,17 @@
 
+import java.awt.HeadlessException;
 import java.io.*;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 import javax.swing.table.TableModel;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
 /**
  *
  * @author asmaabdullah
@@ -21,7 +23,7 @@ public class Update extends javax.swing.JFrame {
      */
     public Update() {
         initComponents();
-        
+
         try (BufferedReader brSearch = new BufferedReader(new FileReader("EventList.txt"))) {
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
 
@@ -191,7 +193,53 @@ public class Update extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+
         int i = jTable1.getSelectedRow();
+        if (i >= 0) { // Ensure a row is selected
+            TableModel model = jTable1.getModel();
+            String id = model.getValueAt(i, 0).toString();
+            String name = NameText.getText().toUpperCase().trim();
+            String price = PriceText.getText().trim();
+
+            if (!name.isEmpty() && !price.isEmpty()) {
+                // Update jTable1
+                model.setValueAt(name, i, 1);
+                model.setValueAt(price, i, 2);
+
+                // Update database
+                String ConnectionURL = "jdbc:mysql://localhost:3306/STLAWorld";
+                String username = "root";
+                String password = "Asmaa123";
+                String sqlUpdate = "UPDATE event SET name = ?, price = ? WHERE id = ?";
+
+                try (Connection conn = DriverManager.getConnection(ConnectionURL, username, password); 
+                        PreparedStatement pstmt = conn.prepareStatement(sqlUpdate)) {
+
+                    // Set parameters
+                    pstmt.setString(1, name);
+                    pstmt.setString(2, price);
+                    pstmt.setString(3, id);
+
+                    // Execute update
+                    int updatedRows = pstmt.executeUpdate();
+                    if (updatedRows > 0) {
+                        JOptionPane.showMessageDialog(null, "Event details updated successfully in the database!");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Event ID not found in the database!");
+                    }
+
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(null, "SQLException: " + ex.getMessage());
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Name or Price fields cannot be empty");
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "No Row Selected");
+        }
+
+        //--------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------
         if (i >= 0) { // Ensure a row is selected
             TableModel model = jTable1.getModel();
             String id = model.getValueAt(i, 0).toString();
@@ -220,14 +268,20 @@ public class Update extends javax.swing.JFrame {
 
                 // Write the updated details back to MenuList.txt
                 PrintWriter pw = new PrintWriter(new FileWriter("EventList.txt"));
+                int c = 0;
                 for (String str : updatedMenu) {
-                    pw.println(str);
+                    if (c == 0) {
+                        pw.print(str);
+                    } else {
+                        pw.print("\n" + str);
+                    }
+                    c++;
                 }
                 pw.close();
                 JOptionPane.showMessageDialog(null, "Event details updated successfully!");
 
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null,"Error: " + e.getMessage());
+                JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
             }
         } else {
             JOptionPane.showMessageDialog(null, "No Row Selected");
@@ -249,7 +303,6 @@ public class Update extends javax.swing.JFrame {
         // TODO add your handling code here:
         this.setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
-
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
