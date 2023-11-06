@@ -1,21 +1,27 @@
 
+import java.awt.HeadlessException;
 import java.io.*;
-import java.util.StringTokenizer;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.StringTokenizer;
+
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
 /**
  *
  * @author asmaabdullah
  */
 public class Add extends javax.swing.JFrame {
+
     private BufferedWriter bw = null;
     private BufferedReader br = null;
+    String ConnectionURL = "jdbc:mysql://localhost:3306/STLAWorld"; // Add the database name to the URL
+    String username = "root";
+    String password = "Asmaa123";
 
     public Add() {
 
@@ -31,7 +37,7 @@ public class Add extends javax.swing.JFrame {
             jTable1.setModel(model);
 
             String line;
-            int rowCount = 0; // Counter for limiting to 4 rows
+            int rowCount = 0;
 
             while ((line = br.readLine()) != null) {
                 String[] key = line.split(",");
@@ -220,65 +226,111 @@ public class Add extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
         try {
-            int result, flag = 0;
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            String id = IdText.getText().toUpperCase().trim();
+            String name = NameText.getText().toUpperCase().trim();
+            String price = PriceText.getText().toUpperCase().trim();
 
-            Object[] row = new Object[4];
-            row[0] = IdText.getText().toUpperCase();
-            row[1] = NameText.getText().toUpperCase();
-            row[2] = PriceText.getText().toUpperCase();
-            model.addRow(row);
+            // Only proceed if all fields are filled out
+            if (!id.isEmpty() && !name.isEmpty() && !price.isEmpty()) {
+                // Check if ID already exists in the file
+                if (NameText.getText().length() != 0) {
+                    try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
+                        String recordSearch1;
+                        nameSearchSel = NameText.getText().toUpperCase();
 
-            if (NameText.getText().length() != 0) {
-                try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
-                    String recordSearch1;
-                    nameSearchSel = NameText.getText().toUpperCase();
-
-                    while ((recordSearch1 = br.readLine()) != null) {
-                        if (recordSearch1.contains(nameSearchSel)) {
-                            JOptionPane.showMessageDialog(null, "Name already exists!!");
-                            flag = 1;
-                        }
-                    }
-                }
-            }
-
-            // checking if id already exists
-            if (IdText.getText().length() != 0) {
-                try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
-                    String recordSearch1;
-                    String idSearchSelTrimmed = IdText.getText().toUpperCase().trim(); // Trim whitespace
-                    int i1 = 0;
-                    while ((recordSearch1 = br.readLine()) != null) {
-                        StringTokenizer stSearchView1 = new StringTokenizer(recordSearch1, ",");
-                        if (stSearchView1.hasMoreTokens()) { // Check if there are more tokens
-                            String idFromRecord = stSearchView1.nextToken().trim(); // Trim whitespace
-                            if (idFromRecord.equals(idSearchSelTrimmed)) {
-                                JOptionPane.showMessageDialog(null, "ID already exists!!");
-                                flag = 1;
-                                i1++;
+                        while ((recordSearch1 = br.readLine()) != null) {
+                            if (recordSearch1.contains(nameSearchSel)) {
+                                JOptionPane.showMessageDialog(null, "Name already exists!!");
                             }
                         }
                     }
                 }
-            }
-            // adding the details in the file
-            if (flag != 1 && IdText.getText().length() != 0 && NameText.getText().length() != 0
-                    && PriceText.getText().length() != 0) {
-                id = IdText.getText().toUpperCase();
-                name = NameText.getText().toUpperCase();
-                cost = PriceText.getText();
+                // Check if ID already exists in the file
 
-                // Format the data and write it to the file
-                String dataToWrite = "\n" + id + ", " + name + ", " + cost;
-                bw.write(dataToWrite);
-                bw.flush(); // Flush to ensure data is written immediately
-                JOptionPane.showMessageDialog(null, "Event Added successfully!");
-            }
+                if (IdText.getText().length() != 0) {
+                    try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
+                        String recordSearch1;
+                        String idSearchSelTrimmed = IdText.getText().toUpperCase().trim(); // Trim whitespace
+                        int i1 = 0;
+                        while ((recordSearch1 = br.readLine()) != null) {
+                            StringTokenizer stSearchView1 = new StringTokenizer(recordSearch1, ",");
+                            if (stSearchView1.hasMoreTokens()) { // Check if there are more tokens
+                                String idFromRecord = stSearchView1.nextToken().trim(); // Trim whitespace
+                                if (idFromRecord.equals(idSearchSelTrimmed)) {
+                                    JOptionPane.showMessageDialog(null, "ID already exists!!");
+                                    i1++;
+                                }
+                            }
+                        }
+                    }
 
-        } catch (Exception ex) {
-            System.out.println("Exception msg: " + ex);
+                    // Format the data and write it to the file
+                    String dataToWrite = "\n" + id + ", " + name + ", " + price;  // '\n' at the end for a new line
+                    bw.write(dataToWrite);
+                    bw.flush(); // Make sure data is written to the file
+
+                    // Add the new row to the model
+                    model.addRow(new Object[]{id, name, price});
+
+                    // add to the database
+                    addToDatabase();
+
+                    JOptionPane.showMessageDialog(null, "Event Added successfully!");
+
+                } else {
+                    JOptionPane.showMessageDialog(null, "Name or ID already exists!!");
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Please fill in all fields.");
+            }
+        } catch (HeadlessException | IOException ex) {
+            JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
         }
+    }
+
+    public String getIdText() {
+        return IdText.getText();
+    }
+
+    public String getNameText() {
+        return NameText.getText();
+    }
+
+    public String getPriceText() {
+        return PriceText.getText();
+    }
+
+    public void addToDatabase() {
+
+        String id = getIdText().toUpperCase();
+        String name = getNameText().toUpperCase();
+        String price = getPriceText().toUpperCase();
+
+        String ConnectionURL = "jdbc:mysql://localhost:3306/STLAWorld";
+        String sql = "INSERT INTO event (Id, Name, Price) VALUES (?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(ConnectionURL, "root", "root"); PreparedStatement pp = conn.prepareStatement(sql)) {
+
+            // Assuming Id is an integer and Price is a double in your database schema
+            pp.setInt(1, Integer.parseInt(id));
+            pp.setString(2, name);
+            pp.setDouble(3, Double.parseDouble(price));
+
+            // Execute the update
+            int affectedRows = pp.executeUpdate();
+
+            if (affectedRows > 0) {
+                JOptionPane.showMessageDialog(this, "Data added to the database successfully!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Data insertion to the database failed.");
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error during database insertion: " + ex.getMessage());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Error in number formatting: " + ex.getMessage());
+        }
+
+
     }//GEN-LAST:event_jButton2ActionPerformed
 
 

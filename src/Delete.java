@@ -1,14 +1,16 @@
 
+import java.awt.HeadlessException;
 import java.io.*;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
 /**
  *
  * @author asmaabdullah
@@ -165,40 +167,79 @@ public class Delete extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
 
+        String ConnectionURL = "jdbc:mysql://localhost:3306/STLAWorld";
+        String username = "root";
+        String password = "Asmaa123";
         int i = jTable1.getSelectedRow();
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        String acc = model.getValueAt(i, 0).toString();
-        model.removeRow(i);
-        ArrayList<String> tempArray = new ArrayList<>();
-        try {
-            BufferedReader brSearch1 = new BufferedReader(new FileReader("EventList.txt"));
-            String key[] = new String[1024];
-            String search;
-            while ((search = brSearch1.readLine()) != null) {
-                key = search.split(",");
-                if (!key[0].equals(acc)) {
-                    tempArray.add(search);
+        if (i >= 0) { // check if a row is selected
+            String acc = model.getValueAt(i, 0).toString();
+            model.removeRow(i);
+
+            // Now, delete from database
+            Connection conn = null;
+            PreparedStatement pstmt = null;
+            try {
+                conn = DriverManager.getConnection(ConnectionURL, username, password);
+                String sql = "DELETE FROM event WHERE id = ?";
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setString(1, acc);
+                int rowsAffected = pstmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(null, "Event Deleted successfully from the database!");
+                } else {
+                    JOptionPane.showMessageDialog(null, "Event could not be found in the database.");
+                }
+            } catch (SQLException ex) {
+                System.out.println("SQLException: " + ex.getMessage());
+            } finally {
+                try {
+                    if (pstmt != null) {
+                        pstmt.close();
+                    }
+                    if (conn != null) {
+                        conn.close();
+                    }
+                } catch (SQLException ex) {
+                    System.out.println("SQLException on close: " + ex.getMessage());
                 }
             }
-            brSearch1.close();
-        } catch (Exception ex) {
-            System.out.println("Exception msg: " + ex);
+            //--------------------------------------------------------------------------------------------
+            //--------------------------------------------------------------------------------------------
+            ArrayList<String> tempArray = new ArrayList<>();
+            try {
+                BufferedReader brSearch1 = new BufferedReader(new FileReader("EventList.txt"));
+                String key[] = new String[1024];
+                String search;
+                while ((search = brSearch1.readLine()) != null) {
+                    key = search.split(",");
+                    if (!key[0].equals(acc)) {
+                        tempArray.add(search);
+                    }
+                }
+                brSearch1.close();
+            } catch (Exception ex) {
+                System.out.println("Exception msg: " + ex);
+            }
+
+            try {
+                PrintWriter pr3 = new PrintWriter("EventList.txt");
+                for (int y = 0; y < tempArray.size(); y++) {
+                    if (y == 0) {
+                        pr3.print(tempArray.get(y));
+                    } else {
+                        pr3.print("\n" + tempArray.get(y));
+                    }
+                }
+                pr3.close();
+                JOptionPane.showMessageDialog(null, "Event Deleted successfully!");
+            } catch (Exception ex) {
+                System.out.println("Exception msg: " + ex);
+            }
+
         }
 
-        try {
-            PrintWriter pr3 = new PrintWriter("EventList.txt");
-            for (int y = 0; y < tempArray.size(); y++) {
-                if (y == 0) {
-                    pr3.print(tempArray.get(y));
-                } else {
-                    pr3.print("\n" + tempArray.get(y));
-                }
-            }
-            pr3.close();
-            JOptionPane.showMessageDialog(null, "Event Deleted successfully!");
-        } catch (Exception ex) {
-            System.out.println("Exception msg: " + ex);
-        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
 

@@ -1,14 +1,17 @@
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.awt.HeadlessException;
+import java.io.*;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
 /**
  *
  * @author asmaabdullah
@@ -20,20 +23,49 @@ public class View extends javax.swing.JFrame {
      */
     public View() {
         initComponents();
-        try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
+
+        String ConnectionURL = "jdbc:mysql://localhost:3306/STLAWorld"; 
+        String username = "root"; 
+        String password = "Asmaa123"; 
+
+        try (Connection conn = DriverManager.getConnection(ConnectionURL, username, password); Statement stmt = conn.createStatement(); 
+                ResultSet rs = stmt.executeQuery("SELECT id, name, price FROM event")) { 
+
             String[] columns = {"ID", "NAME", "PRICE"};
-            DefaultTableModel model = new DefaultTableModel();
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             model.setColumnIdentifiers(columns);
+
+            while (rs.next()) {
+                // Retrieve each column value from the current row of the ResultSet
+                String id = rs.getString("id");
+                String name = rs.getString("name");
+                String price = rs.getString("price");
+
+                // Add row to the table model
+                model.addRow(new Object[]{id, name, price});
+            }
             jTable1.setModel(model);
 
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] event = line.split(",");
-                model.addRow(new Object[]{event[0].trim(), event[1].trim(), event[2].trim()});
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null,"Exception msg: " + ex);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "SQLException: " + ex.getMessage());
         }
+       
+        // Catch other potential exceptions, if necessary
+
+//        try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
+//            String[] columns = {"ID", "NAME", "PRICE"};
+//            DefaultTableModel model = new DefaultTableModel();
+//            model.setColumnIdentifiers(columns);
+//            jTable1.setModel(model);
+//
+//            String line;
+//            while ((line = br.readLine()) != null) {
+//                String[] event = line.split(",");
+//                model.addRow(new Object[]{event[0].trim(), event[1].trim(), event[2].trim()});
+//            }
+//        } catch (Exception ex) {
+//            JOptionPane.showMessageDialog(null,"Exception msg: " + ex);
+//        }
     }
 
     /**
@@ -130,7 +162,6 @@ public class View extends javax.swing.JFrame {
         // TODO add your handling code here:
         this.setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
-
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
