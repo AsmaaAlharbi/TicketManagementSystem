@@ -233,60 +233,55 @@ public class Add extends javax.swing.JFrame {
 
             // Only proceed if all fields are filled out
             if (!id.isEmpty() && !name.isEmpty() && !price.isEmpty()) {
-                // Check if ID already exists in the file
-                if (NameText.getText().length() != 0) {
-                    try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
-                        String recordSearch1;
-                        nameSearchSel = NameText.getText().toUpperCase();
+                boolean nameExists = false;
+                boolean idExists = false;
 
-                        while ((recordSearch1 = br.readLine()) != null) {
-                            if (recordSearch1.contains(nameSearchSel)) {
-                                JOptionPane.showMessageDialog(null, "Name already exists!!");
-                            }
+                // Check if Name already exists in the file
+                try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
+                    String record;
+                    while ((record = br.readLine()) != null) {
+                        String[] parts = record.split(","); // Split the line into parts
+                        // Check if the second part of the line (the name) matches the name entered, ignoring case
+                        if (parts.length > 1 && parts[1].trim().equalsIgnoreCase(name)) {
+                            nameExists = true;
+                            JOptionPane.showMessageDialog(null, "Name already exists!!");
+                            break;
+                        }
+                        if (record.toUpperCase().startsWith(id + ",")) {
+                            idExists = true;
+                            JOptionPane.showMessageDialog(null, "ID already exists!!");
+                            break;
                         }
                     }
                 }
-                // Check if ID already exists in the file
 
-                if (IdText.getText().length() != 0) {
-                    try (BufferedReader br = new BufferedReader(new FileReader("EventList.txt"))) {
-                        String recordSearch1;
-                        String idSearchSelTrimmed = IdText.getText().toUpperCase().trim(); // Trim whitespace
-                        int i1 = 0;
-                        while ((recordSearch1 = br.readLine()) != null) {
-                            StringTokenizer stSearchView1 = new StringTokenizer(recordSearch1, ",");
-                            if (stSearchView1.hasMoreTokens()) { // Check if there are more tokens
-                                String idFromRecord = stSearchView1.nextToken().trim(); // Trim whitespace
-                                if (idFromRecord.equals(idSearchSelTrimmed)) {
-                                    JOptionPane.showMessageDialog(null, "ID already exists!!");
-                                    i1++;
-                                }
-                            }
-                        }
-                    }
-
-                    // Format the data and write it to the file
-                    String dataToWrite = "\n" + id + ", " + name + ", " + price;  // '\n' at the end for a new line
-                    bw.write(dataToWrite);
-                    bw.flush(); // Make sure data is written to the file
-
-                    // Add the new row to the model
-                    model.addRow(new Object[]{id, name, price});
-
-                    // add to the database
-                    addToDatabase();
-
-                    JOptionPane.showMessageDialog(null, "Event Added successfully!");
-
-                } else {
-                    JOptionPane.showMessageDialog(null, "Name or ID already exists!!");
+                // If either ID or Name exists, do not add the new event
+                if (idExists || nameExists) {
+                    return;
                 }
+
+                // Format the data and write it to the file
+                try (BufferedWriter bw = new BufferedWriter(new FileWriter("EventList.txt", true))) {
+                    String dataToWrite = "\n" + id + ", " + name + ", " + price;
+                    bw.append(dataToWrite);
+                    bw.flush();
+                }
+
+                // Add the new row to the model
+                model.addRow(new Object[]{id, name, price});
+
+                // add to the database
+                addToDatabase();
+
+                JOptionPane.showMessageDialog(null, "Event Added successfully!");
+
             } else {
                 JOptionPane.showMessageDialog(null, "Please fill in all fields.");
             }
         } catch (HeadlessException | IOException ex) {
             JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
         }
+
     }
 
     public String getIdText() {
@@ -309,7 +304,7 @@ public class Add extends javax.swing.JFrame {
 
         String ConnectionURL = "jdbc:mysql://localhost:3306/STLAWorld";
         String sql = "INSERT INTO event (Id, Name, Price) VALUES (?, ?, ?)";
-        try (Connection conn = DriverManager.getConnection(ConnectionURL, "root", "root"); PreparedStatement pp = conn.prepareStatement(sql)) {
+        try (Connection conn = DriverManager.getConnection(ConnectionURL, "root", "Asmaa123"); PreparedStatement pp = conn.prepareStatement(sql)) {
 
             // Assuming Id is an integer and Price is a double in your database schema
             pp.setInt(1, Integer.parseInt(id));
