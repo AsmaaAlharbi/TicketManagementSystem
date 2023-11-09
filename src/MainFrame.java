@@ -3,6 +3,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 
+import java.io.*;
+import java.net.*;
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author asmaabdullah
@@ -14,6 +18,15 @@ public class MainFrame extends javax.swing.JFrame {
      */
     public MainFrame() {
         initComponents();
+    }
+
+    private void sendRequestToServer(String requestType) {
+        try (Socket socket = new Socket("127.0.0.1", 8800); PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+            out.println(requestType); 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -156,25 +169,30 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void UPDATEActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UPDATEActionPerformed
         Update u = new Update();
+        sendRequestToServer("Update");
         u.setVisible(true);
     }//GEN-LAST:event_UPDATEActionPerformed
 
     private void ADDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ADDActionPerformed
         Add a = new Add();
+        sendRequestToServer("Add");
         a.setVisible(true);
     }//GEN-LAST:event_ADDActionPerformed
 
     private void DELETEActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DELETEActionPerformed
         Delete del = new Delete();
+        sendRequestToServer("Delete");
         del.setVisible(true);
     }//GEN-LAST:event_DELETEActionPerformed
 
     private void VIEWActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_VIEWActionPerformed
         View v = new View();
+        sendRequestToServer("View");
         v.setVisible(true);
     }//GEN-LAST:event_VIEWActionPerformed
 
     private void ExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ExitActionPerformed
+        sendRequestToServer("Exit");
         System.exit(0);
     }//GEN-LAST:event_ExitActionPerformed
 
@@ -206,7 +224,7 @@ public class MainFrame extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 new MainFrame().setVisible(true);
             }
