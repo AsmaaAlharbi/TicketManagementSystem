@@ -166,8 +166,9 @@ class ClientThread extends Thread {
 
     private Socket clientSocket;
 
-    public ClientThread(Socket socket) {
+    public ClientThread(Socket socket) throws IOException {
         this.clientSocket = socket;
+
     }
 
     @Override
@@ -175,8 +176,10 @@ class ClientThread extends Thread {
         try {
 
             Scanner in = new Scanner(clientSocket.getInputStream());
-
             Server.Text.append("\nClient connect via: " + clientSocket.getInetAddress().getHostAddress());
+
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            out.println("Welcome =) ");
 
             String str = "";
 

@@ -5,6 +5,8 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -21,9 +23,12 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void sendRequestToServer(String requestType) {
-        try (Socket socket = new Socket("127.0.0.1", 8800); PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+        try (Socket socket = new Socket("127.0.0.1", 8800); PrintWriter out = new PrintWriter(socket.getOutputStream(), true); Scanner in = new Scanner(socket.getInputStream());) {
 
-            out.println(requestType); 
+            out.println(requestType);
+            String str = "";
+            str = in.nextLine();
+            JOptionPane.showMessageDialog(null, "Server says: " + str);
         } catch (IOException e) {
             e.printStackTrace();
         }
